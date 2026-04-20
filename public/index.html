@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ClassicModels Dashboard - Phân tích & quản lý dữ liệu doanh nghiệp mô hình xe cổ điển">
+  <title>ClassicModels Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🚗%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery-ui@1.13.2/dist/jquery-ui.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pivottable@2.23.0/dist/pivot.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/pivottable@2.23.0/dist/pivot.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- ========== SIDEBAR ========== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <div class="logo-icon">🚗</div>
+          <div>
+            <h1>ClassicModels</h1>
+            <div class="subtitle">Analytics Dashboard</div>
+          </div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Tổng quan</div>
+          <div class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+            <span class="nav-icon">📊</span>
+            <span>Dashboard</span>
+          </div>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Quản lý dữ liệu</div>
+          <div class="nav-item" data-page="customers" onclick="navigateTo('customers')">
+            <span class="nav-icon">👥</span>
+            <span>Khách hàng</span>
+          </div>
+          <div class="nav-item" data-page="orders" onclick="navigateTo('orders')">
+            <span class="nav-icon">📦</span>
+            <span>Đơn hàng</span>
+          </div>
+          <div class="nav-item" data-page="products" onclick="navigateTo('products')">
+            <span class="nav-icon">🏷️</span>
+            <span>Sản phẩm</span>
+          </div>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Phân tích & Báo cáo</div>
+          <div class="nav-item" data-page="statistics" onclick="navigateTo('statistics')">
+            <span class="nav-icon">📈</span>
+            <span>Thống kê chi tiết</span>
+          </div>
+          <div class="nav-item" data-page="pivot" onclick="navigateTo('pivot')">
+            <span class="nav-icon">🔄</span>
+            <span>Pivot Table</span>
+          </div>
+        </div>
+      </nav>
+      <div style="padding:12px 16px; border-top: 1px solid var(--border-subtle);">
+        <div style="font-size:10px;color:var(--text-dim);text-align:center;letter-spacing:0.5px;">
+          QTCSDL — Sequelize ORM<br>RESTful API + Chart.js
+        </div>
+      </div>
+    </aside>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <main class="main-content">
+      <header class="header">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <div class="header-search">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="globalSearch" placeholder="Tìm kiếm khách hàng, đơn hàng, sản phẩm..." autocomplete="off">
+          <span class="search-shortcut">Ctrl+K</span>
+          <div class="search-results-dropdown" id="searchDropdown"></div>
+        </div>
+        <div class="header-right">
+          <div class="header-time">
+            <span class="pulse-dot"></span>
+            <span id="headerClock">--:--</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-content" id="pageContent">
+        <!-- ===== DASHBOARD ===== -->
+        <div class="page" id="page-dashboard">
+          <div class="page-header">
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Tổng quan hệ thống dữ liệu ClassicModels</p>
+          </div>
+          <div class="kpi-grid" id="kpiGrid">
+            <div class="kpi-card blue">
+              <div class="kpi-header">
+                <div class="kpi-icon blue">👥</div>
+              </div>
+              <div class="kpi-value" id="kpi-customers">—</div>
+              <div class="kpi-label">Khách hàng</div>
+            </div>
+            <div class="kpi-card cyan">
+              <div class="kpi-header">
+                <div class="kpi-icon cyan">📦</div>
+              </div>
+              <div class="kpi-value" id="kpi-orders">—</div>
+              <div class="kpi-label">Đơn hàng</div>
+            </div>
+            <div class="kpi-card green">
+              <div class="kpi-header">
+                <div class="kpi-icon green">🏷️</div>
+              </div>
+              <div class="kpi-value" id="kpi-products">—</div>
+              <div class="kpi-label">Sản phẩm</div>
+            </div>
+            <div class="kpi-card orange">
+              <div class="kpi-header">
+                <div class="kpi-icon orange">💰</div>
+              </div>
+              <div class="kpi-value" id="kpi-revenue">—</div>
+              <div class="kpi-label">Tổng doanh thu</div>
+            </div>
+            <div class="kpi-card pink">
+              <div class="kpi-header">
+                <div class="kpi-icon pink">💳</div>
+              </div>
+              <div class="kpi-value" id="kpi-payments">—</div>
+              <div class="kpi-label">Tổng thanh toán</div>
+            </div>
+          </div>
+          <div class="chart-grid">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">📈 Doanh thu theo thời gian</div>
+                  <div class="card-subtitle">Xu hướng doanh thu qua các kỳ</div>
+                </div>
+                <select class="filter-select" id="revenueTimeGroup" onchange="loadRevenueByTime()" style="min-width:120px">
+                  <option value="month">Theo tháng</option>
+                  <option value="quarter">Theo quý</option>
+                  <option value="year">Theo năm</option>
+                </select>
+              </div>
+              <div class="chart-container"><canvas id="revenueTimeChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">🍩 Phân bổ theo dòng sản phẩm</div>
+                  <div class="card-subtitle">Tỷ trọng doanh thu mỗi Product Line</div>
+                </div>
+              </div>
+              <div class="chart-container"><canvas id="revenueProductLineChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">🏆 Top 10 khách hàng lớn nhất</div>
+                  <div class="card-subtitle">Xếp hạng theo tổng doanh thu</div>
+                </div>
+              </div>
+              <div class="chart-container"><canvas id="topCustomersChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">📋 Phân bổ trạng thái đơn hàng</div>
+                  <div class="card-subtitle">Tỷ lệ các trạng thái xử lý</div>
+                </div>
+              </div>
+              <div class="chart-container"><canvas id="orderStatusChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== CUSTOMERS ===== -->
+        <div class="page" id="page-customers" style="display:none">
+          <div class="page-header">
+            <h1 class="page-title">Khách hàng</h1>
+            <p class="page-subtitle">Quản lý và tra cứu thông tin khách hàng</p>
+          </div>
+          <div class="card">
+            <div class="filter-bar">
+              <input type="text" class="filter-input" id="customerSearch" placeholder="🔍 Tìm khách hàng..." oninput="debounce(loadCustomers, 400)()" style="flex:1;max-width:300px">
+              <select class="filter-select" id="customerCountry" onchange="loadCustomers()">
+                <option value="">🌍 Tất cả quốc gia</option>
+              </select>
+              <span class="pagination-info" id="customerCount" style="margin-left:auto"></span>
+            </div>
+            <div class="table-wrapper">
+              <table class="data-table" id="customerTable">
+                <thead><tr>
+                  <th>Mã KH</th><th>Tên khách hàng</th><th>Liên hệ</th><th>Điện thoại</th><th>Thành phố</th><th>Quốc gia</th><th>Credit Limit</th><th></th>
+                </tr></thead>
+                <tbody id="customerTableBody"></tbody>
+              </table>
+            </div>
+            <div class="pagination" id="customerPagination"></div>
+          </div>
+        </div>
+
+        <!-- ===== ORDERS ===== -->
+        <div class="page" id="page-orders" style="display:none">
+          <div class="page-header">
+            <h1 class="page-title">Đơn hàng</h1>
+            <p class="page-subtitle">Theo dõi và quản lý đơn hàng</p>
+          </div>
+          <div class="card">
+            <div class="filter-bar">
+              <select class="filter-select" id="orderStatus" onchange="loadOrders()">
+                <option value="">📋 Tất cả trạng thái</option>
+              </select>
+              <input type="date" class="filter-input" id="orderStartDate" onchange="loadOrders()" style="min-width:140px">
+              <input type="date" class="filter-input" id="orderEndDate" onchange="loadOrders()" style="min-width:140px">
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('orderStartDate').value='';document.getElementById('orderEndDate').value='';loadOrders()">✕ Xóa lọc</button>
+              <span class="pagination-info" id="orderCount" style="margin-left:auto"></span>
+            </div>
+            <div class="table-wrapper">
+              <table class="data-table" id="orderTable">
+                <thead><tr>
+                  <th>Mã ĐH</th><th>Khách hàng</th><th>Ngày đặt</th><th>Ngày yêu cầu</th><th>Ngày giao</th><th>Trạng thái</th><th></th>
+                </tr></thead>
+                <tbody id="orderTableBody"></tbody>
+              </table>
+            </div>
+            <div class="pagination" id="orderPagination"></div>
+          </div>
+        </div>
+
+        <!-- ===== PRODUCTS ===== -->
+        <div class="page" id="page-products" style="display:none">
+          <div class="page-header">
+            <h1 class="page-title">Sản phẩm</h1>
+            <p class="page-subtitle">Danh mục sản phẩm mô hình xe cổ điển</p>
+          </div>
+          <div class="card">
+            <div class="filter-bar">
+              <input type="text" class="filter-input" id="productSearch" placeholder="🔍 Tìm sản phẩm..." oninput="debounce(loadProducts, 400)()" style="flex:1;max-width:300px">
+              <select class="filter-select" id="productLine" onchange="loadProducts()">
+                <option value="">🏷️ Tất cả dòng SP</option>
+              </select>
+              <span class="pagination-info" id="productCount" style="margin-left:auto"></span>
+            </div>
+            <div class="table-wrapper">
+              <table class="data-table" id="productTable">
+                <thead><tr>
+                  <th>Mã SP</th><th>Tên sản phẩm</th><th>Dòng SP</th><th>Tỉ lệ</th><th>Nhà SX</th><th>Tồn kho</th><th>Giá nhập</th><th>MSRP</th><th></th>
+                </tr></thead>
+                <tbody id="productTableBody"></tbody>
+              </table>
+            </div>
+            <div class="pagination" id="productPagination"></div>
+          </div>
+        </div>
+
+        <!-- ===== STATISTICS ===== -->
+        <div class="page" id="page-statistics" style="display:none">
+          <div class="page-header">
+            <h1 class="page-title">Thống kê & Báo cáo</h1>
+            <p class="page-subtitle">Phân tích dữ liệu doanh nghiệp theo nhiều chiều</p>
+          </div>
+          <div class="tabs">
+            <button class="tab-btn active" onclick="switchStatsTab('byCustomer')">👥 Khách hàng</button>
+            <button class="tab-btn" onclick="switchStatsTab('byTime')">📅 Thời gian</button>
+            <button class="tab-btn" onclick="switchStatsTab('byProduct')">🏷️ Mặt hàng</button>
+            <button class="tab-btn" onclick="switchStatsTab('byCountry')">🌍 Quốc gia</button>
+          </div>
+
+          <div class="tab-content active" id="tab-byCustomer">
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-header">
+                <div class="card-title">📊 Doanh thu theo khách hàng</div>
+                <select class="filter-select" id="statsCustomerLimit" onchange="loadStatsByCustomer()" style="min-width:100px">
+                  <option value="10">Top 10</option>
+                  <option value="20" selected>Top 20</option>
+                  <option value="50">Top 50</option>
+                </select>
+              </div>
+              <div class="chart-container" style="height:380px"><canvas id="statsCustomerChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-title" style="margin-bottom:14px">📋 Chi tiết doanh thu khách hàng</div>
+              <div class="table-wrapper">
+                <table class="data-table" id="statsCustomerTable">
+                  <thead><tr><th>#</th><th>Khách hàng</th><th>Quốc gia</th><th>Thành phố</th><th>Đơn hàng</th><th>Số lượng</th><th>Doanh thu</th></tr></thead>
+                  <tbody id="statsCustomerTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-content" id="tab-byTime">
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-header">
+                <div class="card-title">📈 Biến động doanh thu</div>
+                <div style="display:flex;gap:8px">
+                  <select class="filter-select" id="statsTimeGroup" onchange="loadStatsByTime()" style="min-width:110px">
+                    <option value="month">Theo tháng</option>
+                    <option value="quarter">Theo quý</option>
+                    <option value="year">Theo năm</option>
+                  </select>
+                  <select class="filter-select" id="statsTimeYear" onchange="loadStatsByTime()">
+                    <option value="">Tất cả năm</option>
+                  </select>
+                </div>
+              </div>
+              <div class="chart-container" style="height:380px"><canvas id="statsTimeChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-title" style="margin-bottom:14px">📋 Bảng doanh thu theo kỳ</div>
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead><tr><th>Kỳ</th><th>Đơn hàng</th><th>Số lượng</th><th>Doanh thu</th></tr></thead>
+                  <tbody id="statsTimeTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-content" id="tab-byProduct">
+            <div class="chart-grid">
+              <div class="card">
+                <div class="card-header"><div class="card-title">🍩 Doanh thu theo dòng SP</div></div>
+                <div class="chart-container"><canvas id="statsProductLineChart"></canvas></div>
+              </div>
+              <div class="card">
+                <div class="card-header"><div class="card-title">🔥 Top 10 SP bán chạy</div></div>
+                <div class="chart-container"><canvas id="statsTopProductChart"></canvas></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title" style="margin-bottom:14px">📋 Thống kê theo dòng sản phẩm</div>
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead><tr><th>Dòng SP</th><th>Số SP</th><th>Đơn hàng</th><th>Đã bán</th><th>Doanh thu</th></tr></thead>
+                  <tbody id="statsProductTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-content" id="tab-byCountry">
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-header"><div class="card-title">🌍 Doanh thu theo quốc gia</div></div>
+              <div class="chart-container" style="height:380px"><canvas id="statsCountryChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-title" style="margin-bottom:14px">📋 Chi tiết theo quốc gia</div>
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead><tr><th>#</th><th>Quốc gia</th><th>Khách hàng</th><th>Đơn hàng</th><th>Doanh thu</th></tr></thead>
+                  <tbody id="statsCountryTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== PIVOT TABLE ===== -->
+        <div class="page" id="page-pivot" style="display:none">
+          <div class="page-header">
+            <h1 class="page-title">Pivot Table</h1>
+            <p class="page-subtitle">Kéo thả các trường để tạo bảng phân tích đa chiều tùy chỉnh</p>
+          </div>
+          <div class="card">
+            <div id="pivotContainer" style="overflow:auto"><div class="loading-spinner"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Chi tiết</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <!-- Chatbot -->
+  <button class="chatbot-toggle" id="chatbotToggle" onclick="toggleChatbot()" title="Chatbot hỏi đáp">💬</button>
+  <div class="chatbot-panel" id="chatbotPanel">
+    <div class="chatbot-header">
+      <div class="bot-avatar">🤖</div>
+      <div>
+        <h3>Trợ lý ClassicModels</h3>
+        <div class="status">● Sẵn sàng trả lời</div>
+      </div>
+      <button class="chatbot-close" onclick="toggleChatbot()">&times;</button>
+    </div>
+    <div class="chatbot-messages" id="chatMessages">
+      <div class="chat-msg bot">
+        👋 Xin chào! Tôi là trợ lý dữ liệu ClassicModels.<br>Hãy hỏi tôi về khách hàng, đơn hàng, sản phẩm, doanh thu...
+        <div class="chat-suggestions" id="chatSuggestions"></div>
+      </div>
+    </div>
+    <div class="chatbot-input">
+      <input type="text" id="chatInput" placeholder="Nhập câu hỏi..." onkeypress="if(event.key==='Enter')sendChat()">
+      <button onclick="sendChat()">➤</button>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
